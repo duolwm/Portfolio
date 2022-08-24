@@ -8,4 +8,5 @@
     （4）收集的資料可轉換為報表及圖表。
     （5）可輸出報表（*.csv）及圖表（*.png）。
     （6）有異常警報功能（可開關）。
-![image](https://user-images.githubusercontent.com/48218517/186459596-d80bdebc-9392-4e12-a99b-95fc7bbc187a.png)
+![image](https://user-images.githubusercontent.com/48218517/186460031-f6317dd1-575d-45eb-a6e0-358196e8316b.png)
+
