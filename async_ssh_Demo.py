@@ -25,7 +25,7 @@ class MultiConnectDevice:
         self.target = target
         self.cmd = cmd
 
-    def get_frp_port(self) -> [list, list, dict]:
+    def get_frp_port(self) -> [list, list, dict]:  # 取得各IoT主機連線port
         r = requests.get(self.api_url, auth=(self.api_username, self.api_pwd))
         j = r.json()
         device_list_online = list()
@@ -41,7 +41,7 @@ class MultiConnectDevice:
         return device_list_online, device_list_offline, remote_dict_online
 
     async def run_client(self, target_port: int, client_keys: str, source: str = None, target: str = None,
-                         cmd: str = None) -> None:
+                         cmd: str = None) -> None:  # 單台設備執行指令
         try:
             async with asyncssh.connect(
                     host='main_host_ip',
@@ -62,7 +62,7 @@ class MultiConnectDevice:
     def main(self):
         device_list_online, device_list_offline, remote_dict_online = self.get_frp_port()
         tasks = []
-        for sname in device_list_online:
+        for sname in device_list_online: # 所有設備使用異步執行指令
             tasks.append(self.run_client(target_port=remote_dict_online[sname], client_keys=self.client_keys, source=self.source,
                                 target=self.target,
                                 cmd=self.cmd))
