@@ -1,7 +1,7 @@
 # Portfolio #
 作品集
 
-## 一、感測器監控程式(Monitor_Software_Demo.py)： ##
+## 一、感測器監控程式(Monitor_software_demo.py)： ##
     （1）設有帳號密碼權限管制功能。
     （2）可顯示感測器即時狀態。
     （3）可同時連線多台感測器。
