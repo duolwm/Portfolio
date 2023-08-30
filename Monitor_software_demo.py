@@ -537,7 +537,7 @@ class MainForm(QMainWindow, ModbusClient):
         self.cancel_all()
         self.list_connect_stop()
         try:
-            self.alarm_client.write_register(474, 1)
+            self.alarm_client.write_register(74, 1)
             self.alarm_client.close()
         except:
             pass
@@ -1347,7 +1347,7 @@ class MainForm(QMainWindow, ModbusClient):
                     self.ui.label_4.setText(f'  連線  ')
                     self.ui.label_4.setStyleSheet('background-color:#00FF7F')
                     self.ui.label_4.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
-                    self.alarm_client.write_register(464, 1)
+                    self.alarm_client.write_register(64, 1)
                     self.alarm_client.close()
                 elif not self.alarm_client.connect():
                     self.ui.label_4.setText(f'  離線  ')
@@ -1569,30 +1569,25 @@ class MainForm(QMainWindow, ModbusClient):
             humi = 'NA'
             flow_alert_s = ''
             status_alert_s = ''
-            client.write_register(2047, 65535)
-            client.write_register(2048, 65535)
+            client.write_register(47, 65535)
+            client.write_register(48, 65535)
             r_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')            
             sql = f"""SELECT count FROM public.device_check_status WHERE item ~~ 'alarm_%%'"""
             alarm_count = self.session.execute(sql).fetchall()
             alarm_ch = alarm_count[0][0]
             data = []
-            result = client.read_holding_registers(3026, 8).registers
-            for i in range(0, 8, 2):
-                high = result[i]
-                low = result[i + 1]
-                con = bin(high)[2:] + bin(low)[2:]
-                result_final = int(con, 2)
-                data.append(result_final)
-            ch1 = int(data[0]) + int(data[1]) + int(data[2]) + int(data[3])
-            ch2 = int(data[1]) + int(data[2]) + int(data[3])
-            ch3 = int(data[2]) + int(data[3])
-            ch4 = int(data[3])
+            result = client.read_holding_registers(26, 8).registers
+            result_list = [[result[x], result[x + 1]] for x in range(0, 8, 2)]
+            for high, low in result_list:
+                data.append(int((bin(high)[2:] + bin(low)[2:]), 2))
+            data = [int(x) for x in data]
+            ch1, ch2, ch3, ch4 = [sum(data[i:]) for i in range(len(data))]
             particle_count = [ch1, ch2, ch3, ch4]
-            sample_time = client.read_holding_registers(3089, 2).registers
-            location = client.read_holding_registers(3025).registers[0]
+            sample_time = client.read_holding_registers(89, 2).registers
+            location = client.read_holding_registers(25).registers[0]
             sql = f"""INSERT INTO public.'{serial}' ("timedate","0.1um","0.5um","3um","5um","Location","Sample time","HV","TV","Flow","Service") VALUES ('{str(r_time)}','0','0','0','0','{str(location)}','{sample_time}','{str(humi)}','{str(temp)}','{str(flow_alert_s)}','{str(status_alert_s)}') ON CONFLICT ("timedate") DO NOTHING"""
             self.session.execute(sql)
-            particle_size = client.read_holding_registers(3086, 4).registers
+            particle_size = client.read_holding_registers(86, 4).registers
             connect_id = self.ui.lineEdit.text()
             sql = f"""SELECT * FROM public.device_login WHERE id='{connect_id}'"""
             list1 = self.session.execute(sql).fetchall()
@@ -1648,9 +1643,9 @@ class ReloadBuffer(QRunnable, ModbusClient):
                         mainForm.check_connect_OK(chk_no[0])
                     elif not client.connect():
                         mainForm.check_connect_NG(chk_no[0])
-                    client.write_register(1097, 65535)
-                    client.write_register(1098, 65535)
-                    end_count = client.read_holding_registers(3053, 2).registers
+                    client.write_register(97, 65535)
+                    client.write_register(98, 65535)
+                    end_count = client.read_holding_registers(53, 2).registers
                     if end_count - 1001 < 0:
                         start_count = 1
                     else:
@@ -1660,29 +1655,30 @@ class ReloadBuffer(QRunnable, ModbusClient):
                             b = bin(i)
                             flow_alert_s = ''
                             status_alert_s = ''
-                            client.write_register(1077, b)
-                            record_id = client.read_holding_registers(3045, 2).registers
+                            client.write_register(77, b)
+                            record_id = client.read_holding_registers(45, 2).registers
                             if record_id == 0:
                                 continue
                             else:
-                                r_time = client.read_holding_registers(3045, 6).registers
+                                r_time = client.read_holding_registers(45, 6).registers
                                 r_time = f"""{r_time[0]}/{r_time[1]}/{r_time[2]} {r_time[3]}:{r_time[4]}:{r_time[5]}"""
                                 if r_time == '2255/255/255 255:255:255':
                                     break
-                                data = client.read_holding_registers(3026, 8).registers
-                                ch1 = int(data[0]) + int(data[1]) + int(data[2]) + int(data[3])
-                                ch2 = int(data[1]) + int(data[2]) + int(data[3])
-                                ch3 = int(data[2]) + int(data[3])
-                                ch4 = int(data[3])
+                                result = client.read_holding_registers(26, 8).registers
+                                result_list = [[result[x], result[x + 1]] for x in range(0, 8, 2)]
+                                for high, low in result_list:
+                                    data.append(int((bin(high)[2:] + bin(low)[2:]), 2))
+                                data = [int(x) for x in data]
+                                ch1, ch2, ch3, ch4 = [sum(data[i:]) for i in range(len(data))]
                                 particle_count = [ch1, ch2, ch3, ch4]
-                                sample_time = client.read_holding_registers(3019, 2).registers
+                                sample_time = client.read_holding_registers(19, 2).registers
                                 sample_time_m = bin(sample_time[0])[2:] + bin(sample_time[1])[2:]
                                 sample_time_f = int(sample_time_m, 2)
-                                location = client.read_holding_registers(3025).registers[0]
+                                location = client.read_holding_registers(25).registers[0]
                                 sql = f"""INSERT INTO {serial}("timedate","0.3um","0.5um","1um","5um","Location","Sample time","Flow","Service") VALUES ('{str(
                                     r_time)}','0','0','0','0','{str(location)}','{str(sample_time_f)}','{flow_alert_s}','{status_alert_s}') ON CONFLICT ("timedate") DO NOTHING"""
                                 self.session.execute(sql)
-                                particle_size = client.read_holding_registers(3056, 4).registers
+                                particle_size = client.read_holding_registers(56, 4).registers
                                 for k in range(4):
                                     if particle_size[k] == 0:
                                         continue
